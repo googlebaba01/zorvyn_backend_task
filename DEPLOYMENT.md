@@ -1,330 +1,170 @@
-# DEPLOYMENT GUIDE
+# Deployment Guide for Render.com
 
-## Deploying on Render.com
+## Files Updated for Production
 
-This guide walks you through deploying the Finance Data Processing API to Render.com.
+The following files have been configured for production deployment:
 
-### Prerequisites
+1. **requirements.txt** - All dependencies including PostgreSQL support
+2. **render.yaml** - Render.com service configuration
+3. **start.sh** - Startup script for migrations and static files
+4. **settings.py** - Production-ready database and security settings
+5. **.gitignore** - Prevents sensitive files from being uploaded
 
-1. GitHub account
-2. Render.com account (free tier available)
-3. Git installed locally
+## Environment Variables Required on Render
 
----
+When deploying to Render.com, configure these environment variables:
 
-## Step 1: Prepare Your Repository
+### Required Variables:
+- `SECRET_KEY`: Generate a long random string (use Django's `get_random_secret_key()`)
+- `DEBUG`: Set to `False`
+- `ALLOWED_HOSTS`: `finance-data-api-saav.onrender.com,localhost,127.0.0.1`
+- `DATABASE_PATH`: `db.sqlite3` (fallback if DATABASE_URL not set)
+- `JWT_ACCESS_TOKEN_LIFETIME`: `60` (minutes)
+- `JWT_REFRESH_TOKEN_LIFETIME`: `1440` (minutes = 24 hours)
+- `CORS_ALLOWED_ORIGINS`: `*` (or specify your frontend URL)
 
-### Push Code to GitHub
+### Optional (Render auto-provides):
+- `DATABASE_URL`: Automatically provided by Render when you attach a PostgreSQL database
+- `PORT`: Automatically provided by Render
 
+## Deployment Steps on Render
+
+### Step 1: Push Code to GitHub
 ```bash
-# Initialize git repository (if not already done)
-git init
-
-# Add all files
 git add .
-
-# Create initial commit
-git commit -m "Initial commit: Finance Data Processing Backend"
-
-# Create main branch
-git branch -M main
-
-# Add your remote repository (replace with your repo URL)
-git remote add origin https://github.com/your-username/your-repository.git
-
-# Push to GitHub
-git push -u origin main
+git commit -m "Production ready deployment configuration"
+git push origin main
 ```
 
----
+### Step 2: Create New Web Service on Render
+1. Go to https://dashboard.render.com
+2. Click "New +" → "Web Service"
+3. Connect your GitHub repository
+4. Select the `main` branch
 
-## Step 2: Deploy on Render.com
+### Step 3: Configure the Service
+- **Name**: finance-data-api
+- **Environment**: Python
+- **Region**: Oregon (or closest to you)
+- **Branch**: main
+- **Build Command**: `pip install -r requirements.txt`
+- **Start Command**: `./start.sh`
 
-### Option A: Using render.yaml (Recommended)
+### Step 4: Add Environment Variables
+Click "Environment" tab and add all the variables listed above.
 
-1. **Go to [Render.com](https://render.com)**
-2. Click **"New +"** → **"Blueprint"**
-3. Connect your GitHub account
-4. Select your repository
-5. Render will automatically detect `render.yaml`
-6. Click **"Apply"**
+### Step 5: Attach PostgreSQL Database (Recommended)
+1. In Render dashboard, click "New +" → "PostgreSQL"
+2. Choose free tier
+3. After creation, go back to your web service
+4. Click "Add Database" and select your PostgreSQL instance
+5. Render will automatically set `DATABASE_URL` environment variable
 
-The service will be created with all settings from `render.yaml`.
+### Step 6: Deploy
+1. Click "Save Changes"
+2. Render will start building and deploying
+3. Monitor logs in the "Logs" tab
 
-### Option B: Manual Setup
+## Post-Deployment Tasks
 
-1. **Create New Web Service**
-   - Go to Dashboard → New + → Web Service
-   - Connect your GitHub repository
-   - Select the repository
-
-2. **Configure Settings**
-   ```
-   Name: finance-data-api
-   Region: Oregon (or closest to you)
-   Branch: main
-   Root Directory: (leave blank)
-   Runtime: Python 3
-   ```
-
-3. **Build & Start Commands**
-   ```
-   Build Command: pip install -r requirements.txt
-   Start Command: gunicorn finance_api.wsgi:application
-   ```
-
-4. **Choose Plan**
-   - Select **Free** plan for testing
-   - Upgrade later if needed
-
-5. **Advanced Settings**
-   - Auto-Deploy: Enabled (default)
-   - Health Check Path: `/api/docs/`
-
----
-
-## Step 3: Configure Environment Variables
-
-In Render Dashboard, go to **Environment** tab and add:
-
+### Run Migrations (if not using start.sh)
 ```bash
-# Security
-SECRET_KEY=your-production-secret-key-here
-DEBUG=False
-ALLOWED_HOSTS=*
-
-# Database (SQLite for simplicity)
-DATABASE_PATH=db.sqlite3
-
-# JWT Settings
-JWT_ACCESS_TOKEN_LIFETIME=60
-JWT_REFRESH_TOKEN_LIFETIME=1440
-
-# CORS (Add your frontend URL)
-CORS_ALLOWED_ORIGINS=https://your-frontend-domain.com
-CSRF_TRUSTED_ORIGINS=https://your-frontend-domain.com
-```
-
-**Important:** 
-- Set `DEBUG=False` in production
-- Generate a strong `SECRET_KEY` using: `python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'`
-- Update `ALLOWED_HOSTS` with your actual domain
-
----
-
-## Step 4: Deploy and Run Migrations
-
-### Initial Deployment
-
-1. Click **"Create Web Service"**
-2. Wait for build to complete (~2-5 minutes)
-3. Once deployed, open the web service URL
-
-### Run Database Migrations
-
-You need to run migrations after deployment:
-
-#### Method 1: Render Shell (Recommended)
-
-1. In Render Dashboard, click on your service
-2. Go to **"Shell"** tab
-3. Click **"New Shell"**
-4. Run commands:
-   ```bash
-   python manage.py migrate
-   python manage.py createsuperuser
-   ```
-
-#### Method 2: One-Time Script
-
-Create a startup script that runs migrations before starting the server:
-
-```bash
-# Add to render.yaml or manually run in shell
 python manage.py migrate --noinput
 ```
 
----
-
-## Step 5: Access Your API
-
-### Get Your Production URL
-
-Your API will be available at:
-```
-https://finance-data-api.onrender.com
+### Create Superuser
+```bash
+python manage.py createsuperuser
 ```
 
-### Test Endpoints
+### Collect Static Files
+```bash
+python manage.py collectstatic --noinput
+```
 
-1. **API Documentation**: 
-   ```
-   https://finance-data-api.onrender.com/api/docs/
-   ```
+## Testing the Deployment
 
-2. **Admin Panel**:
-   ```
-   https://finance-data-api.onrender.com/admin/
-   ```
+After deployment completes:
 
-3. **Health Check**:
-   ```
-   https://finance-data-api.onrender.com/api/dashboard/summary/
-   ```
+1. **Health Check**: Visit `https://finance-data-api-saav.onrender.com/`
+   - Should return JSON response (not 500 error)
 
----
+2. **API Documentation**: Visit `https://finance-data-api-saav.onrender.com/api/docs/`
+   - Should show Swagger UI with all endpoints
 
-## Step 6: Create Initial Admin User
+3. **Alternative Docs**: Visit `https://finance-data-api-saav.onrender.com/api/redoc/`
+   - Should show ReDoc documentation
 
-After running migrations and creating superuser:
-
-1. Go to admin panel: `https://your-app.onrender.com/admin/`
-2. Login with credentials created during `createsuperuser`
-3. Create additional users through admin interface or API
-
----
-
-## Production Checklist
-
-Before going live:
-
-- [ ] Set `DEBUG = False`
-- [ ] Generate strong `SECRET_KEY`
-- [ ] Configure `ALLOWED_HOSTS` with your domain
-- [ ] Set up proper `CORS_ALLOWED_ORIGINS`
-- [ ] Run database migrations
-- [ ] Create admin superuser
-- [ ] Test all API endpoints
-- [ ] Review security settings
-- [ ] Set up monitoring (Render provides basic monitoring)
-
----
+4. **Admin Panel**: Visit `https://finance-data-api-saav.onrender.com/admin/`
+   - Login with superuser credentials
 
 ## Troubleshooting
 
-### Issue: Static Files Not Loading
+### Issue: Internal Server Error (500)
+**Possible causes:**
+- Missing environment variables
+- Database connection issues
+- SECRET_KEY not set properly
 
-**Solution:** WhiteNoise is already configured. Ensure:
-```python
-# settings.py
-MIDDLEWARE = [
-    # ... other middleware
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    # ... other middleware
-]
+**Solution:**
+1. Check Render logs in dashboard
+2. Verify all environment variables are set
+3. Ensure DATABASE_URL is correctly configured
+
+### Issue: Database Migration Errors
+**Solution:**
+```bash
+# SSH into Render or run locally with production DB
+python manage.py migrate
+python manage.py migrate --run-syncdb
 ```
 
-### Issue: Database Errors
-
-**Solution:** Make sure migrations are run:
+### Issue: Static Files Not Loading
+**Solution:**
 ```bash
-python manage.py migrate
+python manage.py collectstatic --noinput --clear
 ```
 
 ### Issue: CORS Errors
+**Solution:**
+- Update `CORS_ALLOWED_ORIGINS` to include your frontend domain
+- For testing, use `*` (not recommended for production)
 
-**Solution:** Update CORS origins in environment variables:
-```bash
-CORS_ALLOWED_ORIGINS=https://your-frontend.com,http://localhost:3000
-```
+## Security Notes
 
-### Issue: 500 Internal Server Error
+✅ **Production Settings Enabled:**
+- HTTPS redirect (when DEBUG=False)
+- Secure cookies
+- HSTS (HTTP Strict Transport Security)
+- XSS Protection
+- Content Type sniffing protection
+- Clickjacking protection
 
-**Solution:** Check logs in Render Dashboard → Logs tab
-Common fixes:
-- Missing environment variables
-- Database not migrated
-- Import errors (check requirements.txt)
+⚠️ **Important:**
+- Never commit `.env` files or secrets to GitHub
+- Use Render's environment variable UI for all secrets
+- Keep DEBUG=False in production
+- Change SECRET_KEY regularly
 
----
+## Monitoring
 
-## Monitoring & Maintenance
-
-### View Logs
-
-In Render Dashboard:
-- **Logs Tab**: Real-time application logs
-- **Events Tab**: Deployment history
-
-### Auto-Deploy
-
-Every push to the `main` branch triggers automatic deployment.
-
-### Manual Redeploy
-
-If needed:
-1. Go to Render Dashboard
-2. Click **"Manual Deploy"**
-3. Select branch and deploy
-
----
-
-## Database Backup (Important!)
-
-Since we're using SQLite:
-
-### Download Database File
-
-1. Connect via SSH or use Render Shell
-2. Download the `db.sqlite3` file
-3. Store securely
-
-### Recommendation for Production
-
-For better reliability, consider upgrading to PostgreSQL:
-
-1. Create PostgreSQL database on Render
-2. Install psycopg2-binary (already in requirements.txt)
-3. Update DATABASES setting in settings.py:
-   ```python
-   DATABASES = {
-       'default': {
-           'ENGINE': 'django.db.backends.postgresql',
-           'HOST': config('DB_HOST'),
-           'NAME': config('DB_NAME'),
-           'USER': config('DB_USER'),
-           'PASSWORD': config('DB_PASSWORD'),
-           'PORT': '5432',
-       }
-   }
-   ```
-
----
-
-## Cost Estimation
-
-### Free Tier Includes:
-- 750 hours/month (enough for one service running 24/7)
-- 100GB bandwidth/month
-- Basic monitoring
-
-### Paid Plans (if needed):
-- Starter: $7/month
-- Standard: Varies by usage
-
----
-
-## Support Resources
-
-- [Render Documentation](https://render.com/docs)
-- [Django Deployment Guide](https://docs.djangoproject.com/en/stable/howto/deployment/)
-- [DRF Best Practices](https://www.django-rest-framework.org/)
-
----
+- **Logs**: Available in Render dashboard under "Logs" tab
+- **Metrics**: CPU, Memory, and Request stats in "Metrics" tab
+- **Incidents**: Render will notify you of any downtime
 
 ## Next Steps
 
-After successful deployment:
+1. Test all API endpoints
+2. Create initial admin user
+3. Set up monitoring alerts
+4. Consider upgrading to paid plan for better performance
+5. Set up automated backups for PostgreSQL
 
-1. ✅ Share API documentation URL with team
-2. ✅ Test all endpoints with tools like Postman
-3. ✅ Set up frontend integration
-4. ✅ Monitor usage and performance
-5. ✅ Implement rate limiting if needed
-6. ✅ Set up error tracking (e.g., Sentry)
+## Support
 
----
-
-**Deployment Complete! 🚀**
-
-Your Finance Data Processing API is now live and ready to use!
+If you encounter issues:
+1. Check Render logs first
+2. Verify environment variables
+3. Test locally with production settings
+4. Consult Django deployment documentation
+5. Check Render community forums

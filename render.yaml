@@ -9,19 +9,19 @@ services:
     plan: free
     branch: main
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn finance_api.wsgi:application
+    startCommand: ./start.sh
     envVars:
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
-        sync: false
+        value: 'False'
       - key: ALLOWED_HOSTS
-        sync: false
+        value: 'finance-data-api-saav.onrender.com,localhost,127.0.0.1'
       - key: DATABASE_PATH
-        sync: false
+        value: 'db.sqlite3'
       - key: JWT_ACCESS_TOKEN_LIFETIME
-        sync: false
+        value: '60'
       - key: JWT_REFRESH_TOKEN_LIFETIME
-        sync: false
+        value: '1440'
       - key: CORS_ALLOWED_ORIGINS
-        sync: false
+        value: '*'

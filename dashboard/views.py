@@ -56,37 +56,6 @@ class DashboardSummaryView(APIView):
     
     permission_classes = [IsAuthenticated]
     
-    @swagger_auto_schema(
-        operation_summary="Get dashboard summary",
-        operation_description="Retrieve overall financial summary with totals and averages.",
-        manual_parameters=[
-            openapi.Parameter(
-                'date_from',
-                openapi.IN_QUERY,
-                description="Filter from date (YYYY-MM-DD)",
-                type=openapi.TYPE_STRING,
-                format='date'
-            ),
-            openapi.Parameter(
-                'date_to',
-                openapi.IN_QUERY,
-                description="Filter to date (YYYY-MM-DD)",
-                type=openapi.TYPE_STRING,
-                format='date'
-            ),
-            openapi.Parameter(
-                'record_type',
-                openapi.IN_QUERY,
-                description="Filter by type (income/expense)",
-                type=openapi.TYPE_STRING,
-                enum=['income', 'expense']
-            ),
-        ],
-        responses={
-            200: openapi.Response('Dashboard summary', DashboardSummarySerializer),
-            401: 'Unauthorized',
-        }
-    )
     def get(self, request):
         """
         Retrieve dashboard summary statistics.

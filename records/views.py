@@ -87,8 +87,12 @@ class FinancialRecordViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
         user = self.request.user
         
+        # During schema generation, skip this check
+        if getattr(self, 'swagger_fake_view', False):
+            return queryset
+        
         # Viewers can only see their own records
-        if user.role == 'viewer':
+        if hasattr(user, 'role') and user.role == 'viewer':
             queryset = queryset.filter(created_by=user)
         
         # Always exclude deleted records unless explicitly requested
@@ -133,16 +137,6 @@ class FinancialRecordViewSet(viewsets.ModelViewSet):
         
         return [permission() for permission in self.permission_classes]
     
-    @swagger_auto_schema(
-        operation_summary="Create a new financial record",
-        operation_description="Create a new financial record. Only Analysts and Admins can create records.",
-        request_body=FinancialRecordCreateUpdateSerializer,
-        responses={
-            201: openapi.Response('Record created', FinancialRecordSerializer),
-            400: 'Bad Request - Invalid data',
-            403: 'Forbidden - Insufficient permissions',
-        }
-    )
     def create(self, request, *args, **kwargs):
         """
         Create a new financial record.
@@ -167,13 +161,6 @@ class FinancialRecordViewSet(viewsets.ModelViewSet):
             headers=headers
         )
     
-    @swagger_auto_schema(
-        operation_summary="List financial records",
-        operation_description="Retrieve paginated list of financial records with filtering options.",
-        responses={
-            200: openapi.Response('List of records', FinancialRecordListSerializer(many=True)),
-        }
-    )
     def list(self, request, *args, **kwargs):
         """
         List financial records with filtering, searching, and pagination.
@@ -239,15 +226,6 @@ class FinancialRecordViewSet(viewsets.ModelViewSet):
             message="You do not have permission to update this record"
         )
     
-    @swagger_auto_schema(
-        operation_summary="Delete a financial record",
-        operation_description="Soft delete a financial record. Only Admins can delete records.",
-        responses={
-            204: 'Record deleted successfully',
-            403: 'Forbidden - Admin access required',
-            404: 'Record not found',
-        }
-    )
     def destroy(self, request, *args, **kwargs):
         """
         Soft delete a financial record.
@@ -270,15 +248,6 @@ class FinancialRecordViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
     
     @action(detail=True, methods=['patch'])
-    @swagger_auto_schema(
-        operation_summary="Restore a deleted record",
-        operation_description="Restore a soft-deleted financial record. Only Admins can restore records.",
-        responses={
-            200: openapi.Response('Record restored', FinancialRecordSerializer),
-            403: 'Forbidden - Admin access required',
-            404: 'Record not found',
-        }
-    )
     def restore(self, request, pk=None):
         """
         Restore a soft-deleted financial record.

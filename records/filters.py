@@ -106,17 +106,7 @@ class FinancialRecordFilter(django_filters.FilterSet):
     
     class Meta:
         model = FinancialRecord
-        fields = [
-            'record_type',
-            'category',
-            'date_from',
-            'date_to',
-            'amount_min',
-            'amount_max',
-            'created_by',
-            'is_mine',
-            'search',
-        ]
+        fields = []
     
     def filter_by_current_user(self, queryset, name, value):
         """

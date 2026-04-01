@@ -82,8 +82,12 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         queryset = super().get_queryset()
         
+        # During schema generation, skip this check
+        if getattr(self, 'swagger_fake_view', False):
+            return queryset
+        
         # Non-admin users can only see their own profile
-        if not self.request.user.role == 'admin':
+        if hasattr(self.request.user, 'role') and not self.request.user.role == 'admin':
             queryset = queryset.filter(id=self.request.user.id)
         
         return queryset
@@ -126,16 +130,6 @@ class UserViewSet(viewsets.ModelViewSet):
         
         return [permission() for permission in self.permission_classes]
     
-    @swagger_auto_schema(
-        operation_summary="Create a new user",
-        operation_description="Create a new user account. Only admins can create users.",
-        request_body=UserCreateSerializer,
-        responses={
-            201: openapi.Response('User created successfully', UserDetailSerializer),
-            400: 'Bad Request - Invalid data',
-            403: 'Forbidden - Admin access required',
-        }
-    )
     def create(self, request, *args, **kwargs):
         """
         Create a new user.
@@ -161,14 +155,6 @@ class UserViewSet(viewsets.ModelViewSet):
             headers=headers
         )
     
-    @swagger_auto_schema(
-        operation_summary="Get user details",
-        operation_description="Retrieve detailed information about a specific user.",
-        responses={
-            200: openapi.Response('User details', UserDetailSerializer),
-            404: 'User not found',
-        }
-    )
     def retrieve(self, request, *args, **kwargs):
         """
         Retrieve user details.
@@ -186,17 +172,6 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, context={'request': request})
         return Response(serializer.data)
     
-    @swagger_auto_schema(
-        operation_summary="Update user",
-        operation_description="Update user information. Only admins can update users.",
-        request_body=UserSerializer,
-        responses={
-            200: openapi.Response('User updated', UserDetailSerializer),
-            400: 'Bad Request - Invalid data',
-            403: 'Forbidden - Admin access required',
-            404: 'User not found',
-        }
-    )
     def update(self, request, *args, **kwargs):
         """
         Update user information.
@@ -218,15 +193,6 @@ class UserViewSet(viewsets.ModelViewSet):
         
         return Response(UserDetailSerializer(instance, context={'request': request}).data)
     
-    @swagger_auto_schema(
-        operation_summary="Delete user",
-        operation_description="Delete a user. Only admins can delete users.",
-        responses={
-            204: 'User deleted successfully',
-            403: 'Forbidden - Admin access required',
-            404: 'User not found',
-        }
-    )
     def destroy(self, request, *args, **kwargs):
         """
         Delete a user.
@@ -254,17 +220,6 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
     
     @action(detail=True, methods=['patch'], url_path='status')
-    @swagger_auto_schema(
-        operation_summary="Update user status",
-        operation_description="Activate or deactivate a user account. Only admins can perform this action.",
-        request_body=UserStatusUpdateSerializer,
-        responses={
-            200: openapi.Response('Status updated', UserDetailSerializer),
-            400: 'Bad Request - Invalid status',
-            403: 'Forbidden - Admin access required',
-            404: 'User not found',
-        }
-    )
     def update_status(self, request, pk=None):
         """
         Update user active status.
@@ -293,16 +248,6 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(UserDetailSerializer(user, context={'request': request}).data)
     
     @action(detail=True, methods=['post'], url_path='change-password')
-    @swagger_auto_schema(
-        operation_summary="Change password",
-        operation_description="Change your password. Users can only change their own password.",
-        request_body=ChangePasswordSerializer,
-        responses={
-            200: 'Password changed successfully',
-            400: 'Bad Request - Invalid passwords',
-            404: 'User not found',
-        }
-    )
     def change_password(self, request, pk=None):
         """
         Change user password.

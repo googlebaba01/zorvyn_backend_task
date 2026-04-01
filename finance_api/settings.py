@@ -24,7 +24,12 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-change-in-pro
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
+# Allowed hosts for production
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+# Add Render.com domain to allowed hosts
+if not DEBUG:
+    ALLOWED_HOSTS.extend(['*.onrender.com', 'finance-data-api-saav.onrender.com'])
 
 # Application definition
 INSTALLED_APPS = [
@@ -41,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'django_filters',
+    'drf_yasg',
     
     # Local apps
     'users',
@@ -81,14 +87,27 @@ TEMPLATES = [
 WSGI_APPLICATION = 'finance_api.wsgi.application'
 
 # Database configuration
-# Using SQLite for development simplicity
-# Can be easily switched to PostgreSQL for production
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / os.environ.get('DATABASE_PATH', 'db.sqlite3'),
+# Using SQLite for development, PostgreSQL for production
+DATABASE_PATH = os.environ.get('DATABASE_PATH', 'db.sqlite3')
+
+# Check if DATABASE_URL is set (Render.com provides this)
+if os.environ.get('DATABASE_URL'):
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    # Fallback to SQLite for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / DATABASE_PATH,
+        }
+    }
 
 # Custom User Model
 AUTH_USER_MODEL = 'users.User'
@@ -198,6 +217,21 @@ CSRF_TRUSTED_ORIGINS = os.environ.get(
     'CSRF_TRUSTED_ORIGINS',
     default='http://localhost:3000,http://127.0.0.1:3000'
 ).split(',')
+
+# Production Security Settings
+if not DEBUG:
+    # Secure SSL/HTTPS settings
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # Additional security
+    X_FRAME_OPTIONS = 'DENY'
+    CONTENT_TYPE_NOSNIFF = True
+    XSS_PROTECTION = '1; mode=block'
 
 # Logging Configuration (Basic)
 LOGGING = {
