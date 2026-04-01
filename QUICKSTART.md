@@ -11,7 +11,7 @@ This guide will help you get the Finance Data Processing API up and running quic
 ### Clone or Navigate to Project
 
 ```bash
-cd c:\Users\Asus\OneDrive\Desktop\zorvyn_backend
+cd zorvyn_backend
 ```
 
 ### Create Virtual Environment
@@ -44,8 +44,6 @@ pip install -r requirements.txt
 copy .env.example .env  # Windows
 cp .env.example .env    # Linux/Mac
 ```
-
-The default settings work out of the box for development. No changes needed!
 
 ### Run Migrations
 
@@ -131,7 +129,7 @@ Manage users and records through the admin interface.
 ```bash
 curl -X POST http://127.0.0.1:8000/api/token/ \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
+  -d '{"username":"admin","password":"newadmin456"}'
 ```
 
 Response:
@@ -309,16 +307,3 @@ python manage.py check
 ```
 
 ---
-
-## Need Help?
-
-1. Check **README.md** for detailed documentation
-2. Check **DEPLOYMENT.md** for deployment guide
-3. Review inline code comments
-4. Visit API docs at `/api/docs/`
-
----
-
-**You're all set! 🚀**
-
-Happy coding!
