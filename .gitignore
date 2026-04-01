@@ -60,5 +60,3 @@ htmlcov/
 .tox/
 .nox/
 
-# Qoder (AI assistant)
-.qoder/
