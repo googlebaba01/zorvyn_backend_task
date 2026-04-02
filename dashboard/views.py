@@ -1,13 +1,7 @@
 """
 Dashboard Views Module
 
-This module contains view classes for dashboard analytics endpoints.
-
-Classes:
-    DashboardSummaryView: Overall financial summary
-    CategoryBreakdownView: Category-wise breakdown
-    MonthlyTrendsView: Monthly trends analysis
-    RecentActivityView: Recent transactions feed
+API views for dashboard analytics endpoints.
 """
 
 from rest_framework.views import APIView
@@ -29,64 +23,28 @@ from .serializers import (
 
 
 class DashboardSummaryView(APIView):
-    """
-    API View for dashboard summary statistics.
-    
-    Provides high-level financial metrics including total income,
-    total expenses, net balance, and record counts.
-    
-    Endpoint:
-        GET /api/dashboard/summary/
-    
-    Query Parameters:
-        - date_from: Filter from date (YYYY-MM-DD)
-        - date_to: Filter to date (YYYY-MM-DD)
-        - record_type: Filter by 'income' or 'expense'
-    
-    Returns:
-        - total_income: Sum of all income
-        - total_expense: Sum of all expenses
-        - net_balance: Income - Expense
-        - record_count: Total number of records
-        - average_income: Average income amount
-        - average_expense: Average expense amount
-    """
+    """API View for dashboard summary statistics."""
     
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        """
-        Retrieve dashboard summary statistics.
-        
-        Args:
-            request: HTTP request with optional query parameters
-            
-        Returns:
-            Response: Summary statistics
-        """
-        # Get query parameters
+        """Retrieve dashboard summary statistics."""
         date_from = request.query_params.get('date_from')
         date_to = request.query_params.get('date_to')
         record_type = request.query_params.get('record_type')
         
-        # Base queryset - filter based on user role
         queryset = FinancialRecord.objects.filter(is_deleted=False)
         
-        # Viewers can only see their own records
         if request.user.role == 'viewer':
             queryset = queryset.filter(created_by=request.user)
         
-        # Apply date filters
         if date_from:
             queryset = queryset.filter(date__gte=date_from)
         if date_to:
             queryset = queryset.filter(date__lte=date_to)
-        
-        # Apply type filter
         if record_type:
             queryset = queryset.filter(record_type=record_type)
         
-        # Calculate aggregates
         income_queryset = queryset.filter(record_type='income')
         expense_queryset = queryset.filter(record_type='expense')
         
@@ -102,7 +60,6 @@ class DashboardSummaryView(APIView):
             average=Coalesce(Avg('amount'), Decimal('0.00'))
         )
         
-        # Prepare response data
         total_income = income_data['total'] or 0
         total_expense = expense_data['total'] or 0
         
@@ -122,53 +79,21 @@ class DashboardSummaryView(APIView):
 
 
 class CategoryBreakdownView(APIView):
-    """
-    API View for category-wise breakdown.
-    
-    Provides detailed breakdown of income and expenses by category,
-    including totals, counts, and percentages.
-    
-    Endpoint:
-        GET /api/dashboard/category-breakdown/
-    
-    Query Parameters:
-        - date_from: Filter from date
-        - date_to: Filter to date
-        - record_type: Filter by 'income' or 'expense'
-    
-    Returns:
-        List of categories with:
-        - total_amount
-        - record_count
-        - percentage of total
-        - average_amount
-    """
+    """API View for category-wise breakdown."""
     
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        """
-        Retrieve category-wise breakdown.
-        
-        Args:
-            request: HTTP request with optional query parameters
-            
-        Returns:
-            Response: Category breakdown list
-        """
-        # Get query parameters
+        """Retrieve category-wise breakdown."""
         date_from = request.query_params.get('date_from')
         date_to = request.query_params.get('date_to')
         record_type = request.query_params.get('record_type')
         
-        # Base queryset
         queryset = FinancialRecord.objects.filter(is_deleted=False)
         
-        # Viewers can only see their own records
         if request.user.role == 'viewer':
             queryset = queryset.filter(created_by=request.user)
         
-        # Apply filters
         if date_from:
             queryset = queryset.filter(date__gte=date_from)
         if date_to:
@@ -176,17 +101,14 @@ class CategoryBreakdownView(APIView):
         if record_type:
             queryset = queryset.filter(record_type=record_type)
         
-        # Group by category
         category_data = queryset.values('category', 'record_type').annotate(
             total_amount=Sum('amount'),
             record_count=Count('id'),
             average_amount=Avg('amount')
         ).order_by('-total_amount')
         
-        # Calculate total for percentage
         total = queryset.aggregate(total=Sum('amount'))['total'] or 0
         
-        # Format response
         result = []
         for item in category_data:
             percentage = (item['total_amount'] / total * 100) if total > 0 else 0
@@ -206,65 +128,30 @@ class CategoryBreakdownView(APIView):
 
 
 class MonthlyTrendsView(APIView):
-    """
-    API View for monthly trend analysis.
-    
-    Provides month-by-month breakdown of income and expenses,
-    showing trends over time.
-    
-    Endpoint:
-        GET /api/dashboard/monthly-trends/
-    
-    Query Parameters:
-        - months: Number of months to include (default: 12)
-        - year: Specific year to analyze
-    
-    Returns:
-        List of months with:
-        - income total
-        - expense total
-        - net (income - expense)
-        - savings rate
-        - record count
-    """
+    """API View for monthly trend analysis."""
     
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        """
-        Retrieve monthly trend data.
-        
-        Args:
-            request: HTTP request with optional query parameters
-            
-        Returns:
-            Response: Monthly trend data
-        """
-        # Get query parameters
+        """Retrieve monthly trend data."""
         months_param = request.query_params.get('months', '12')
-        # Handle trailing slash or other non-numeric characters
         try:
             months = int(months_param.rstrip('/'))
         except (ValueError, AttributeError):
             months = 12
         year = request.query_params.get('year')
         
-        # Base queryset
         queryset = FinancialRecord.objects.filter(is_deleted=False)
         
-        # Viewers can only see their own records
         if request.user.role == 'viewer':
             queryset = queryset.filter(created_by=request.user)
         
-        # Filter by year if specified
         if year:
             queryset = queryset.filter(date__year=year)
         else:
-            # Default to last N months
             cutoff_date = timezone.now().date() - timedelta(days=months * 30)
             queryset = queryset.filter(date__gte=cutoff_date)
         
-        # Annotate by month
         monthly_data = queryset.annotate(
             month=TruncMonth('date')
         ).values('month').annotate(
@@ -277,7 +164,6 @@ class MonthlyTrendsView(APIView):
             record_count=Count('id')
         ).order_by('month')
         
-        # Format response
         result = []
         for item in monthly_data:
             income = item['income'] or Decimal('0.00')
@@ -301,46 +187,21 @@ class MonthlyTrendsView(APIView):
 
 
 class RecentActivityView(APIView):
-    """
-    API View for recent activity feed.
-    
-    Provides a list of most recent transactions for the activity feed.
-    
-    Endpoint:
-        GET /api/dashboard/recent-activity/
-    
-    Query Parameters:
-        - limit: Number of records to return (default: 10)
-    
-    Returns:
-        List of recent transactions with basic details
-    """
+    """API View for recent activity feed."""
     
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        """
-        Retrieve recent activity feed.
-        
-        Args:
-            request: HTTP request with optional limit parameter
-            
-        Returns:
-            Response: Recent transactions list
-        """
+        """Retrieve recent activity feed."""
         limit = int(request.query_params.get('limit', 10))
         
-        # Base queryset
         queryset = FinancialRecord.objects.filter(is_deleted=False)
         
-        # Viewers can only see their own records
         if request.user.role == 'viewer':
             queryset = queryset.filter(created_by=request.user)
         
-        # Get recent records
         recent_records = queryset.select_related('created_by').order_by('-created_at')[:limit]
         
-        # Format response
         result = []
         for record in recent_records:
             result.append({

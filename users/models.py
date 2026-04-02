@@ -1,15 +1,7 @@
 """
 User Models Module
 
-This module defines the custom User model with role-based access control.
-
-Models:
-    User: Custom user model with role and status fields
-
-Roles:
-    - VIEWER: Read-only access to dashboard and records
-    - ANALYST: Can view and create records, access analytics
-    - ADMIN: Full system access including user management
+Custom User model with role-based access control.
 """
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
@@ -18,29 +10,10 @@ from django.utils import timezone
 
 
 class UserManager(BaseUserManager):
-    """
-    Custom manager for the User model.
-    
-    Provides methods for creating users and superusers
-    with proper field handling and validation.
-    """
+    """Custom manager for the User model."""
     
     def create_user(self, username, email, password=None, **extra_fields):
-        """
-        Create and return a regular user with an email and password.
-        
-        Args:
-            username (str): Unique username
-            email (str): Email address
-            password (str): Plain text password (will be hashed)
-            **extra_fields: Additional fields like role, first_name, etc.
-        
-        Returns:
-            User: Created user instance
-        
-        Raises:
-            ValueError: If email is not provided
-        """
+        """Create and return a regular user with email and password."""
         if not email:
             raise ValueError('Users must have an email address')
         
@@ -51,19 +24,7 @@ class UserManager(BaseUserManager):
         return user
     
     def create_superuser(self, username, email, password=None, **extra_fields):
-        """
-        Create and return a superuser (Admin role).
-        
-        Args:
-            username (str): Unique username
-            email (str): Email address
-            password (str): Plain text password (will be hashed)
-            **extra_fields: Additional fields (role forced to 'admin')
-        
-        Returns:
-            User: Created superuser instance
-        """
-        # Force admin role and permissions for superuser
+        """Create and return a superuser (Admin role)."""
         extra_fields.setdefault('role', 'admin')
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
@@ -73,33 +34,7 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """
-    Custom User model with role-based access control.
-    
-    This model extends Django's AbstractBaseUser to provide:
-    - Role-based permissions (Viewer, Analyst, Admin)
-    - User status tracking (active/inactive)
-    - Timestamp tracking
-    - Email-based authentication
-    
-    Attributes:
-        username (str): Unique identifier for the user
-        email (str): Unique email address
-        role (str): User role (viewer, analyst, admin)
-        is_active (bool): Account status
-        is_staff (bool): Staff status for admin panel access
-        date_joined (datetime): Account creation timestamp
-        last_login (datetime): Last login timestamp
-        updated_at (datetime): Last update timestamp
-    
-    Methods:
-        get_full_name(): Return full name or username
-        get_short_name(): Return username
-        has_role(role): Check if user has specific role
-        can_create_records(): Check if user can create records
-        can_delete_records(): Check if user can delete records
-        can_manage_users(): Check if user can manage other users
-    """
+    """Custom User model with role-based access control."""
     
     # Role choices
     ROLE_VIEWER = 'viewer'
@@ -162,88 +97,40 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.username} ({self.get_role_display()})"
     
     def get_full_name(self):
-        """
-        Return the user's full name.
-        
-        Returns:
-            str: Full name if available, otherwise username
-        """
+        """Return the user's full name."""
         if self.first_name or self.last_name:
             return f"{self.first_name} {self.last_name}".strip()
         return self.username
     
     def get_short_name(self):
-        """
-        Return the user's short name.
-        
-        Returns:
-            str: Username
-        """
+        """Return the user's short name."""
         return self.username
     
     def has_role(self, role):
-        """
-        Check if user has a specific role.
-        
-        Args:
-            role (str): Role to check against
-            
-        Returns:
-            bool: True if user has the specified role
-        """
+        """Check if user has a specific role."""
         return self.role == role
     
     def can_create_records(self):
-        """
-        Check if user can create financial records.
-        
-        Returns:
-            bool: True if user is Analyst or Admin
-        """
+        """Check if user can create financial records (Analyst or Admin)."""
         return self.role in [self.ROLE_ANALYST, self.ROLE_ADMIN]
     
     def can_delete_records(self):
-        """
-        Check if user can delete financial records.
-        
-        Returns:
-            bool: True if user is Admin
-        """
+        """Check if user can delete financial records (Admin only)."""
         return self.role == self.ROLE_ADMIN
     
     def can_update_any_record(self):
-        """
-        Check if user can update any record (not just their own).
-        
-        Returns:
-            bool: True if user is Admin
-        """
+        """Check if user can update any record (Admin only)."""
         return self.role == self.ROLE_ADMIN
     
     def can_manage_users(self):
-        """
-        Check if user can manage other users.
-        
-        Returns:
-            bool: True if user is Admin
-        """
+        """Check if user can manage other users (Admin only)."""
         return self.role == self.ROLE_ADMIN
     
     def can_view_analytics(self):
-        """
-        Check if user can view dashboard analytics.
-        
-        Returns:
-            bool: True for all authenticated users
-        """
-        return True  # All authenticated users can view analytics
+        """Check if user can view dashboard analytics."""
+        return True
     
     @property
     def full_name(self):
-        """
-        Property alias for get_full_name().
-        
-        Returns:
-            str: Full name
-        """
+        """Property alias for get_full_name()."""
         return self.get_full_name()

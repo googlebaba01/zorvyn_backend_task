@@ -1,10 +1,7 @@
 """
 Financial Record Views Module
 
-This module contains viewsets for financial record operations.
-
-Classes:
-    FinancialRecordViewSet: CRUD operations with filtering and permissions
+ViewSet for financial record CRUD operations with role-based access control.
 """
 
 from rest_framework import viewsets, status, filters
@@ -29,39 +26,7 @@ from users.permissions import (
 
 
 class FinancialRecordViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for managing financial records.
-    
-    Provides comprehensive CRUD operations with role-based access control,
-    advanced filtering, search, and pagination.
-    
-    Endpoints:
-        GET /api/records/ - List records (with filtering)
-        POST /api/records/ - Create new record (Analyst/Admin only)
-        GET /api/records/{id}/ - Retrieve record details
-        PUT /api/records/{id}/ - Update record (Admin or creator if Analyst)
-        DELETE /api/records/{id}/ - Soft delete record (Admin only)
-        PATCH /api/records/{id}/restore/ - Restore deleted record (Admin only)
-    
-    Permissions:
-        - List: All authenticated users (filtered by role)
-        - Create: Analyst and Admin only
-        - Update: Admin or creator (if Analyst)
-        - Delete: Admin only
-    
-    Filtering:
-        - By type: ?record_type=income
-        - By category: ?category=salary&category=food
-        - By date range: ?date_from=2024-01-01&date_to=2024-12-31
-        - By amount range: ?amount_min=100&amount_max=1000
-        - By user: ?created_by=1 or ?is_mine=true
-        - Search: ?search=description text
-    
-    Ordering:
-        - By date: ?ordering=-date (default)
-        - By amount: ?ordering=amount or ?ordering=-amount
-        - By created_at: ?ordering=created_at
-    """
+    """ViewSet for managing financial records with role-based access control."""
     
     queryset = FinancialRecord.objects.filter(is_deleted=False)
     permission_classes = [IsActiveUser]
@@ -72,40 +37,23 @@ class FinancialRecordViewSet(viewsets.ModelViewSet):
     ordering = ['-date', '-created_at']
     
     def get_queryset(self):
-        """
-        Filter queryset based on user role and permissions.
-        
-        - Admins: Can see all non-deleted records
-        - Analysts: Can see all non-deleted records
-        - Viewers: Can only see their own records
-        
-        Returns:
-            QuerySet: Filtered queryset
-        """
+        """Filter queryset based on user role and permissions."""
         queryset = super().get_queryset()
         user = self.request.user
         
-        # During schema generation, skip this check
         if getattr(self, 'swagger_fake_view', False):
             return queryset
         
-        # Viewers can only see their own records
         if hasattr(user, 'role') and user.role == 'viewer':
             queryset = queryset.filter(created_by=user)
         
-        # Always exclude deleted records unless explicitly requested
         if not self.request.query_params.get('is_deleted'):
             queryset = queryset.filter(is_deleted=False)
         
         return queryset
     
     def get_serializer_class(self):
-        """
-        Return appropriate serializer based on action.
-        
-        Returns:
-            Serializer: Appropriate serializer for the action
-        """
+        """Return appropriate serializer based on action."""
         if self.action == 'create':
             return FinancialRecordCreateUpdateSerializer
         elif self.action in ['update', 'partial_update']:
@@ -115,20 +63,12 @@ class FinancialRecordViewSet(viewsets.ModelViewSet):
         return FinancialRecordSerializer
     
     def get_permissions(self):
-        """
-        Set permissions based on action.
-        
-        Different actions require different permission levels.
-        
-        Returns:
-            list: List of permission instances
-        """
+        """Set permissions based on action."""
         if self.action == 'create':
             self.permission_classes = [CanCreateRecords, IsActiveUser]
         elif self.action in ['destroy', 'restore']:
             self.permission_classes = [CanDeleteRecords, IsActiveUser]
         elif self.action in ['update', 'partial_update']:
-            # Custom permission logic in perform_update
             self.permission_classes = [IsActiveUser]
         else:
             self.permission_classes = [IsActiveUser]
@@ -136,18 +76,7 @@ class FinancialRecordViewSet(viewsets.ModelViewSet):
         return [permission() for permission in self.permission_classes]
     
     def create(self, request, *args, **kwargs):
-        """
-        Create a new financial record.
-        
-        Only Analyst and Admin users can create records.
-        The record is automatically associated with the creating user.
-        
-        Args:
-            request: HTTP request with record data
-            
-        Returns:
-            Response: Created record details
-        """
+        """Create a new financial record."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -160,18 +89,7 @@ class FinancialRecordViewSet(viewsets.ModelViewSet):
         )
     
     def list(self, request, *args, **kwargs):
-        """
-        List financial records with filtering, searching, and pagination.
-        
-        All authenticated users can list records, but the results are filtered
-        based on their role and permissions.
-        
-        Args:
-            request: HTTP request with optional query parameters
-            
-        Returns:
-            Response: Paginated list of records
-        """
+        """List financial records with filtering, searching, and pagination."""
         queryset = self.filter_queryset(self.get_queryset())
         
         page = self.paginate_queryset(queryset)
@@ -183,61 +101,29 @@ class FinancialRecordViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     def perform_create(self, serializer):
-        """
-        Perform record creation with automatic user assignment.
-        
-        Args:
-            serializer: Validated serializer instance
-        """
+        """Perform record creation with automatic user assignment."""
         serializer.save(created_by=self.request.user)
     
     def perform_update(self, serializer):
-        """
-        Perform record update with permission checks.
-        
-        - Admins can update any record
-        - Analysts can only update their own records
-        - Viewers cannot update records
-        
-        Args:
-            serializer: Validated serializer instance
-            
-        Raises:
-            PermissionError: If user cannot update the record
-        """
+        """Perform record update with permission checks. Admins can update any, analysts only their own."""
         instance = serializer.instance
         user = self.request.user
         
-        # Admin can update any record
         if user.role == 'admin':
             serializer.save()
             return
         
-        # Analyst can only update their own records
         if user.role == 'analyst' and instance.created_by == user:
             serializer.save()
             return
         
-        # No permission to update
         self.permission_denied(
             request=self.request,
             message="You do not have permission to update this record"
         )
     
     def destroy(self, request, *args, **kwargs):
-        """
-        Soft delete a financial record.
-        
-        Only Admin users can delete records.
-        The record is marked as deleted but not removed from database.
-        
-        Args:
-            request: HTTP request
-            pk: Primary key of the record
-            
-        Returns:
-            Response: Empty response with 204 status
-        """
+        """Soft delete a financial record. Admin only."""
         instance = self.get_object()
         instance.is_deleted = True
         instance.deleted_at = timezone.now()
@@ -247,18 +133,7 @@ class FinancialRecordViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['patch'])
     def restore(self, request, pk=None):
-        """
-        Restore a soft-deleted financial record.
-        
-        Only Admin users can restore deleted records.
-        
-        Args:
-            request: HTTP request
-            pk: Primary key of the record
-            
-        Returns:
-            Response: Restored record details
-        """
+        """Restore a soft-deleted financial record. Admin only."""
         instance = self.get_object()
         
         if not instance.is_deleted:

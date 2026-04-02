@@ -1,14 +1,6 @@
 """
 Django settings for finance_api project.
-
-This is a comprehensive configuration file handling:
-- Security settings
-- Database configuration
-- REST Framework settings
-- JWT Authentication
-- CORS headers
-- Static files
-- Middleware
+Production-ready configuration with SQLite/PostgreSQL support.
 """
 
 from pathlib import Path
@@ -22,19 +14,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-change-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-# Allowed hosts for production
+# Allowed hosts
 ALLOWED_HOSTS_DEFAULT = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1')
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_DEFAULT.split(',')]
 
-# Add Render.com domain to allowed hosts in production
+# Add Render.com domains
 if not DEBUG:
-    RENDER_DOMAINS = [
-        '*.onrender.com',
-        'finance-data-api-saav.onrender.com',
-        'finance-data-api-saav.render.dev'
-    ]
+    RENDER_DOMAINS = ['*.onrender.com']
     for domain in RENDER_DOMAINS:
         if domain not in ALLOWED_HOSTS:
             ALLOWED_HOSTS.append(domain)
@@ -64,8 +52,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # For serving static files
-    'corsheaders.middleware.CorsMiddleware',  # CORS support
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -94,11 +82,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'finance_api.wsgi.application'
 
-# Database configuration
-# Using SQLite for development, PostgreSQL for production
+# Database - SQLite for development, PostgreSQL for production
 DATABASE_PATH = os.environ.get('DATABASE_PATH', 'db.sqlite3')
 
-# Check if DATABASE_URL is set (Render.com provides this)
 if os.environ.get('DATABASE_URL'):
     import dj_database_url
     DATABASES = {
@@ -109,7 +95,6 @@ if os.environ.get('DATABASE_URL'):
         )
     }
 else:
-    # Fallback to SQLite for local development
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -142,7 +127,7 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# Static files
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -151,31 +136,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # REST Framework Configuration
 REST_FRAMEWORK = {
-    # Authentication classes
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    
-    # Permission classes - can be overridden at view level
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
-    
-    # Pagination settings
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
-    
-    # Filtering
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ),
-    
-    # Exception handling
-    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
-    
-    # Renderer for browsable API
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
@@ -189,77 +162,46 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
-    
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': None,
-    'JWK_URL': None,
-    'LEEWAY': 0,
-    
     'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
-    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
-    
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
     'TOKEN_TYPE_CLAIM': 'token_type',
-    'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
-    
-    'JTI_CLAIM': 'jti',
-    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
-    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
 # CORS Settings
-# Get CORS allowed origins from environment variable
-_cors_origins_raw = os.environ.get(
-    'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:3000,http://127.0.0.1:3000'
-)
-# Parse and validate CORS origins - filter out empty strings and wildcards
+_cors_origins_raw = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')
 CORS_ALLOWED_ORIGINS = [
     origin.strip() for origin in _cors_origins_raw.split(',')
     if origin.strip() and origin.strip() != '*'
 ]
-# Fallback to localhost if no valid origins provided
 if not CORS_ALLOWED_ORIGINS:
     CORS_ALLOWED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000']
 
 # CSRF Settings
-# Get CSRF trusted origins from environment variable
-_csrf_origins_raw = os.environ.get(
-    'CSRF_TRUSTED_ORIGINS',
-    default='http://localhost:3000,http://127.0.0.1:3000'
-)
-# Parse and validate CSRF origins - filter out empty strings and wildcards
+_csrf_origins_raw = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')
 CSRF_TRUSTED_ORIGINS = [
     origin.strip() for origin in _csrf_origins_raw.split(',')
     if origin.strip() and origin.strip() != '*'
 ]
-# Fallback to localhost if no valid origins provided
 if not CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000']
 
 # Production Security Settings
 if not DEBUG:
-    # Secure SSL/HTTPS settings
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    
-    # Additional security
     X_FRAME_OPTIONS = 'DENY'
     CONTENT_TYPE_NOSNIFF = True
     XSS_PROTECTION = '1; mode=block'
 
-# Logging Configuration (Basic)
+# Logging Configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
