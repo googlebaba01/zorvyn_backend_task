@@ -50,3 +50,7 @@ Thumbs.db
 
 # Media files (user uploads)
 media/
+# Testing
+.tox/
+.nox/
+
