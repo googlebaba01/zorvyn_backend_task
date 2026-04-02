@@ -2,10 +2,6 @@
 
 Production-ready Django REST API with role-based access control for financial data management.
 
-[![Deploy to Render](https://img.shields.io/badge/Deploy%20to-Render-blue)](https://render.com)
-[![Django](https://img.shields.io/badge/Django-5.0-green)](https://django.io)
-[![DRF](https://img.shields.io/badge/DRF-3.15-red)](https://djangorestframework.org)
-
 ## ✨ Features
 
 - ✅ **User Management** - Role-based access (Viewer, Analyst, Admin)
@@ -21,7 +17,7 @@ Production-ready Django REST API with role-based access control for financial da
 
 ```bash
 # Clone repo
-git clone YOUR_REPO_URL
+git clone https://github.com/googlebaba01/zorvyn_backend_task
 cd zorvyn_backend
 
 # Install dependencies
@@ -37,8 +33,6 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Visit: `http://127.0.0.1:8000/api/docs/`
-
 ### Deploy to Render (5 mins)
 
 1. Push to GitHub
@@ -48,9 +42,6 @@ Visit: `http://127.0.0.1:8000/api/docs/`
 5. Start: `./start.sh`
 6. Add environment variables
 
-**Done!** Your API is live.
-
-📖 **Full deployment guide:** [`DEPLOYMENT_CHECKLIST.md`](DEPLOYMENT_CHECKLIST.md)
 
 ## 📡 API Endpoints
 
@@ -105,8 +96,6 @@ curl http://localhost:8000/api/records/ \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
-📖 **Complete testing guide:** [`POSTMAN_QUICK_GUIDE.md`](POSTMAN_QUICK_GUIDE.md)
-
 ## 🛠️ Tech Stack
 
 - **Backend:** Django 5.0 + Django REST Framework 3.15
@@ -127,15 +116,6 @@ zorvyn_backend/
 ├── start.sh         # Deployment script
 └── README.md        # This file
 ```
-
-## 📚 Documentation
-
-| File | Purpose |
-|------|---------|
-| [`README.md`](README.md) | Main documentation (this file) |
-| [`DEPLOYMENT_CHECKLIST.md`](DEPLOYMENT_CHECKLIST.md) | Step-by-step deployment guide |
-| [`POSTMAN_QUICK_GUIDE.md`](POSTMAN_QUICK_GUIDE.md) | API testing with Postman |
-| [`SUBMISSION_GUIDE.md`](SUBMISSION_GUIDE.md) | Submission instructions |
 
 ## 🔐 Security
 
@@ -159,15 +139,3 @@ zorvyn_backend/
 ✅ Pagination  
 ✅ API Documentation  
 ✅ Production Deployment Ready  
-
-## 📝 License
-
-Built for assessment purposes.
-
----
-
-**Ready to deploy?** Check out [`DEPLOYMENT_CHECKLIST.md`](DEPLOYMENT_CHECKLIST.md)
-
-**Questions?** See [`POSTMAN_QUICK_GUIDE.md`](POSTMAN_QUICK_GUIDE.md) for API testing
-
-**Built with ❤️ using Django & DRF**
