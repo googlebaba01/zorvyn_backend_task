@@ -9,7 +9,6 @@ Production-ready Django REST API with role-based access control for financial da
 - ✅ **Dashboard Analytics** - Summary, trends, category breakdowns
 - ✅ **JWT Authentication** - Secure token-based auth
 - ✅ **Production Ready** - Deploy on Render in 5 minutes
-- ✅ **API Documentation** - Swagger/OpenAPI included
 
 ## 🚀 Quick Start
 
