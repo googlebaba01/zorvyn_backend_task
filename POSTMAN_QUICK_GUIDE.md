@@ -45,6 +45,7 @@ Content-Type: application/json
   "username": "newuser",
   "email": "new@example.com",
   "password": "securepass123",
+  "password_confirm": "securepass123",
   "role": "analyst",
   "first_name": "New",
   "last_name": "User"
@@ -216,5 +217,3 @@ Content-Type: application/json
    - Type: Bearer Token
    - Token: `{{access_token}}`
 5. Add environment variable `access_token` with your token value
-
-Happy Testing! 🚀
