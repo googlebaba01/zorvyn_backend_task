@@ -35,15 +35,34 @@ X_FRAME_OPTIONS = 'DENY'  # Clickjacking protection
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 
 # CORS - Update with your actual frontend domain
-CORS_ALLOWED_ORIGINS = os.environ.get(
+# Get CORS allowed origins from environment variable
+_cors_origins_raw = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
-    'https://your-frontend-domain.com'
-).split(',')
+    default='https://your-frontend-domain.com'
+)
+# Parse and validate CORS origins - filter out empty strings and wildcards
+CORS_ALLOWED_ORIGINS = [
+    origin.strip() for origin in _cors_origins_raw.split(',')
+    if origin.strip() and origin.strip() != '*'
+]
+# Fallback if no valid origins provided
+if not CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS = ['https://your-frontend-domain.com']
 
-CSRF_TRUSTED_ORIGINS = os.environ.get(
+# CSRF Settings
+# Get CSRF trusted origins from environment variable
+_csrf_origins_raw = os.environ.get(
     'CSRF_TRUSTED_ORIGINS',
-    'https://your-frontend-domain.com'
-).split(',')
+    default='https://your-frontend-domain.com'
+)
+# Parse and validate CSRF origins - filter out empty strings and wildcards
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() for origin in _csrf_origins_raw.split(',')
+    if origin.strip() and origin.strip() != '*'
+]
+# Fallback if no valid origins provided
+if not CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS = ['https://your-frontend-domain.com']
 
 # Database - Use PostgreSQL in production
 # Render provides DATABASE_URL automatically

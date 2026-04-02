@@ -215,16 +215,34 @@ SIMPLE_JWT = {
 }
 
 # CORS Settings
-CORS_ALLOWED_ORIGINS = os.environ.get(
+# Get CORS allowed origins from environment variable
+_cors_origins_raw = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
     default='http://localhost:3000,http://127.0.0.1:3000'
-).split(',')
+)
+# Parse and validate CORS origins - filter out empty strings and wildcards
+CORS_ALLOWED_ORIGINS = [
+    origin.strip() for origin in _cors_origins_raw.split(',')
+    if origin.strip() and origin.strip() != '*'
+]
+# Fallback to localhost if no valid origins provided
+if not CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000']
 
 # CSRF Settings
-CSRF_TRUSTED_ORIGINS = os.environ.get(
+# Get CSRF trusted origins from environment variable
+_csrf_origins_raw = os.environ.get(
     'CSRF_TRUSTED_ORIGINS',
     default='http://localhost:3000,http://127.0.0.1:3000'
-).split(',')
+)
+# Parse and validate CSRF origins - filter out empty strings and wildcards
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() for origin in _csrf_origins_raw.split(',')
+    if origin.strip() and origin.strip() != '*'
+]
+# Fallback to localhost if no valid origins provided
+if not CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000']
 
 # Production Security Settings
 if not DEBUG:
