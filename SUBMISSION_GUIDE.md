@@ -537,20 +537,13 @@ Could be added with:
 
 ### GitHub Repository
 
-**URL:** `https://github.com/your-username/your-repository`
+**URL:** `https://github.com/googlebaba01/zorvyn_backend_task`
 
 Replace with actual URL after pushing.
 
 ### Deployment URL
 
 **Live API:** `https://finance-data-api.onrender.com`
-
-Replace with actual URL after deployment.
-
-### API Documentation
-
-**Swagger UI:** `https://finance-data-api.onrender.com/api/docs/`  
-**ReDoc:** `https://finance-data-api.onrender.com/api/redoc/`
 
 ---
 
@@ -564,11 +557,3 @@ This project demonstrates:
 - ✅ Clean code principles
 - ✅ Comprehensive documentation
 - ✅ Production deployment knowledge
-
-The implementation is **practical, maintainable, and extensible** - ready for real-world use while being simple enough for assessment purposes.
-
----
-
-**Built with ❤️ using Django & Django REST Framework**
-
-*Last Updated: April 1, 2024*
