@@ -12,6 +12,7 @@ It includes:
 
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -27,20 +28,7 @@ schema_view = get_schema_view(
     openapi.Info(
         title="Finance Data Processing API",
         default_version='v1',
-        description="""
-        Comprehensive backend API for managing financial data with role-based access control.
-        
-        ## Features:
-        - User & Role Management
-        - Financial Records CRUD
-        - Dashboard Analytics
-        - JWT Authentication
-        
-        ## Roles:
-        - **Viewer**: Read-only access to dashboard and records
-        - **Analyst**: Can create and update records
-        - **Admin**: Full system access including user management
-        """,
+        description="Backend API for managing financial data with role-based access control.",
         contact=openapi.Contact(email="admin@example.com"),
         license=openapi.License(name="Assessment Project"),
     ),
@@ -48,18 +36,35 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
+# Simple API info endpoint as fallback
+def api_info(request):
+    """Simple API information endpoint."""
+    return JsonResponse({
+        'title': 'Finance Data Processing API',
+        'version': 'v1',
+        'description': 'Backend API for managing financial data with role-based access control.',
+        'endpoints': {
+            'swagger': '/api/docs/',
+            'redoc': '/api/redoc/',
+            'openapi_json': '/api/schema.json',
+            'health': '/health/',
+        }
+    })
+
 # API URL patterns
 urlpatterns = [
     # Root endpoint (health check and API info)
     path('', api_views.api_root, name='api_root'),
     path('health/', api_views.health_check, name='health_check'),
+    path('api-info/', api_info, name='api_info'),
     
     # Admin panel
     path('admin/', admin.site.urls),
     
-    # API Documentation
+    # API Documentation - simplified
     path('api/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('api/redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path('api/schema.json', schema_view.without_cache('openapi-schema'), name='schema-json'),
     
     # Authentication endpoints
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
