@@ -20,9 +20,12 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 ALLOWED_HOSTS_DEFAULT = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1')
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_DEFAULT.split(',')]
 
-# Add Render.com domains
+# Add Render.com domains automatically
 if not DEBUG:
-    RENDER_DOMAINS = ['*.onrender.com']
+    RENDER_DOMAINS = [
+        '*.onrender.com',
+        'finance-data-api-saav.onrender.com'
+    ]
     for domain in RENDER_DOMAINS:
         if domain not in ALLOWED_HOSTS:
             ALLOWED_HOSTS.append(domain)
