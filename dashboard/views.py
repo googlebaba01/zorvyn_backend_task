@@ -18,8 +18,6 @@ from django.db.models.functions import TruncMonth, Coalesce
 from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal, DivisionByZero
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
 
 from records.models import FinancialRecord
 from .serializers import (
@@ -148,37 +146,6 @@ class CategoryBreakdownView(APIView):
     
     permission_classes = [IsAuthenticated]
     
-    @swagger_auto_schema(
-        operation_summary="Get category breakdown",
-        operation_description="Retrieve category-wise financial breakdown with percentages.",
-        manual_parameters=[
-            openapi.Parameter(
-                'date_from',
-                openapi.IN_QUERY,
-                description="Filter from date (YYYY-MM-DD)",
-                type=openapi.TYPE_STRING,
-                format='date'
-            ),
-            openapi.Parameter(
-                'date_to',
-                openapi.IN_QUERY,
-                description="Filter to date (YYYY-MM-DD)",
-                type=openapi.TYPE_STRING,
-                format='date'
-            ),
-            openapi.Parameter(
-                'record_type',
-                openapi.IN_QUERY,
-                description="Filter by type (income/expense)",
-                type=openapi.TYPE_STRING,
-                enum=['income', 'expense']
-            ),
-        ],
-        responses={
-            200: openapi.Response('Category breakdown', CategoryBreakdownSerializer(many=True)),
-            401: 'Unauthorized',
-        }
-    )
     def get(self, request):
         """
         Retrieve category-wise breakdown.
@@ -263,29 +230,6 @@ class MonthlyTrendsView(APIView):
     
     permission_classes = [IsAuthenticated]
     
-    @swagger_auto_schema(
-        operation_summary="Get monthly trends",
-        operation_description="Retrieve month-by-month financial trends.",
-        manual_parameters=[
-            openapi.Parameter(
-                'months',
-                openapi.IN_QUERY,
-                description="Number of months to include",
-                type=openapi.TYPE_INTEGER,
-                default=12
-            ),
-            openapi.Parameter(
-                'year',
-                openapi.IN_QUERY,
-                description="Specific year to analyze",
-                type=openapi.TYPE_INTEGER,
-            ),
-        ],
-        responses={
-            200: openapi.Response('Monthly trends', MonthlyTrendSerializer(many=True)),
-            401: 'Unauthorized',
-        }
-    )
     def get(self, request):
         """
         Retrieve monthly trend data.
@@ -374,23 +318,6 @@ class RecentActivityView(APIView):
     
     permission_classes = [IsAuthenticated]
     
-    @swagger_auto_schema(
-        operation_summary="Get recent activity",
-        operation_description="Retrieve most recent financial transactions.",
-        manual_parameters=[
-            openapi.Parameter(
-                'limit',
-                openapi.IN_QUERY,
-                description="Number of records to return",
-                type=openapi.TYPE_INTEGER,
-                default=10
-            ),
-        ],
-        responses={
-            200: openapi.Response('Recent activity', RecentActivitySerializer(many=True)),
-            401: 'Unauthorized',
-        }
-    )
     def get(self, request):
         """
         Retrieve recent activity feed.
