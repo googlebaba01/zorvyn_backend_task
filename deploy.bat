@@ -1,60 +1,56 @@
 @echo off
-REM Deployment Script for Finance Backend
-REM This script prepares the project for deployment
+REM Quick Deployment Script for Render.com
+REM This script commits all changes and pushes to GitHub for automatic deployment
 
-echo ========================================
-echo Finance Backend - Deployment Preparation
-echo ========================================
+echo ================================================
+echo   Finance Data Processing API - Deploy to Render
+echo ================================================
 echo.
 
-REM Step 1: Collect static files
-echo [1/4] Collecting static files...
-python manage.py collectstatic --noinput
-if errorlevel 1 (
-    echo ERROR: Failed to collect static files
+REM Step 1: Check git status
+echo [1/4] Checking git status...
+git status
+if %errorlevel% neq 0 (
+    echo ERROR: Not in a git repository or git not installed!
     pause
     exit /b 1
 )
-echo ✓ Static files collected
-echo.
 
-REM Step 2: Run migrations
-echo [2/4] Running database migrations...
-python manage.py migrate
-if errorlevel 1 (
-    echo ERROR: Failed to run migrations
+REM Step 2: Add all changes
+echo.
+echo [2/4] Adding all changes to git...
+git add .
+echo Done!
+
+REM Step 3: Commit with message
+echo.
+echo [3/4] Committing changes...
+set COMMIT_MSG=Production deployment - %date% %time%
+git commit -m "%COMMIT_MSG%"
+if %errorlevel% neq 0 (
+    echo No changes to commit or commit failed.
+)
+
+REM Step 4: Push to main
+echo.
+echo [4/4] Pushing to main branch...
+git push origin main
+if %errorlevel% neq 0 (
+    echo ERROR: Push failed! Check your git configuration.
     pause
     exit /b 1
 )
-echo ✓ Migrations applied
-echo.
-
-REM Step 3: Create superuser prompt
-echo [3/4] Would you like to create a superuser? (Y/N)
-set /p CREATE_SUPER=
-if /i "%CREATE_SUPER%"=="Y" (
-    python manage.py createsuperuser
-)
-echo.
-
-REM Step 4: Git setup
-echo [4/4] Setting up Git repository...
-if not exist .git (
-    git init
-    echo ✓ Git initialized
-) else (
-    echo ✓ Git already initialized
-)
 
 echo.
-echo ========================================
-echo Deployment Preparation Complete!
-echo ========================================
+echo ================================================
+echo   SUCCESS! Code pushed to GitHub
 echo.
-echo Next Steps:
-echo 1. Add your files: git add .
-echo 2. Commit: git commit -m "Initial commit"
-echo 3. Add remote: git remote add origin YOUR_REPO_URL
-echo 4. Push: git push -u origin main
+echo   Next Steps:
+echo   1. Go to https://dashboard.render.com
+echo   2. Select your service: finance-data-api
+echo   3. Click "Manual Deploy" if auto-deploy is disabled
+echo   4. Wait 2-3 minutes for deployment
+echo   5. Test: https://finance-data-api-saav.onrender.com/
+echo ================================================
 echo.
 pause

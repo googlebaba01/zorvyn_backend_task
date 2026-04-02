@@ -25,11 +25,19 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-change-in-pro
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
 # Allowed hosts for production
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS_DEFAULT = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_DEFAULT.split(',')]
 
-# Add Render.com domain to allowed hosts
+# Add Render.com domain to allowed hosts in production
 if not DEBUG:
-    ALLOWED_HOSTS.extend(['*.onrender.com', 'finance-data-api-saav.onrender.com'])
+    RENDER_DOMAINS = [
+        '*.onrender.com',
+        'finance-data-api-saav.onrender.com',
+        'finance-data-api-saav.render.dev'
+    ]
+    for domain in RENDER_DOMAINS:
+        if domain not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(domain)
 
 # Application definition
 INSTALLED_APPS = [

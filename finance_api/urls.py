@@ -20,6 +20,7 @@ from rest_framework_simplejwt.views import (
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from finance_api import views as api_views
 
 # Schema view for Swagger/OpenAPI documentation
 schema_view = get_schema_view(
@@ -49,6 +50,10 @@ schema_view = get_schema_view(
 
 # API URL patterns
 urlpatterns = [
+    # Root endpoint (health check and API info)
+    path('', api_views.api_root, name='api_root'),
+    path('health/', api_views.health_check, name='health_check'),
+    
     # Admin panel
     path('admin/', admin.site.urls),
     
